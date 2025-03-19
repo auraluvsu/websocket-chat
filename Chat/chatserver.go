@@ -13,6 +13,28 @@ type Chatroom struct {
 	port string
 }
 
+func KillServer() {
+	ok, conn := SecuredConn()
+	if ok {
+		log.Println("Server Terminated...")
+		conn.Close()
+	} else {
+		log.Println("Server Already Terminated...")
+		return
+	}
+}
+
+func SecuredConn() (bool, net.Conn) {
+	conn, err := SetConnection(8080)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if conn != nil {
+		return true, conn
+	} else {
+		return false, nil
+	}
+}
 func CreateNewRoom(newName string) Chatroom {
 	idBytes, err := utils.RandBytes(8)
 	if err != nil {
