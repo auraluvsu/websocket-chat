@@ -22,3 +22,8 @@ func CreateNewHash(n []byte) ([]byte, error) {
 	}
 	return hash, nil
 }
+
+func CheckPassword(pswd, storedpwsd string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(storedpwsd), []byte(pswd))
+	return err == nil
+}

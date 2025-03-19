@@ -1,16 +1,66 @@
 package chatter
 
 import (
-	"auraluvsu.com/Utils"
+	"auraluvsu.com/User"
 	"fmt"
 	"log"
 	"net"
+	"net/http"
+
+	"auraluvsu.com/Utils"
+	"github.com/gorilla/websocket"
 )
 
+// This struct is created for ease of storing information about each created room
 type Chatroom struct {
 	ID   []byte
 	name string
 	port string
+}
+
+// Websocket upgrader
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+func HandleConnection(w http.ResponseWriter, r *http.Request) {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Error upgrading connection:", err)
+		return
+	}
+	defer ws.Close()
+	log.Println("Websocket connection established!")
+	msgChan := make(chan string)
+	go SendMessage(ws, msgChan)
+	go ReceiveMessage(ws, msgChan)
+	select {}
+
+}
+
+func SendMessage(conn *websocket.Conn, msgChan chan string) {
+	for msg := range msgChan {
+		err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
+		if err != nil {
+			log.Println("Error writing to server:", err)
+			return
+		}
+	}
+}
+
+func ReceiveMessage(u user.User, ws *websocket.Conn, msgChan chan string) {
+	for {
+		_, content, err := ws.ReadMessage()
+		if err != nil {
+			fmt.Println("Error reading message:", err)
+			close(msgChan)
+			return
+		}
+		log.Printf("%v: %s\n", u.Name, content)
+		msgChan <- string(content)
+	}
 }
 
 func KillServer() {
