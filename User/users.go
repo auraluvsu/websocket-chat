@@ -2,7 +2,6 @@ package user
 
 import (
 	"auraluvsu.com/Utils"
-	"bufio"
 	"fmt"
 	"log"
 )

@@ -2,13 +2,12 @@ package chatter
 
 import (
 	"auraluvsu.com/User"
+	"auraluvsu.com/Utils"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"log"
 	"net"
 	"net/http"
-
-	"auraluvsu.com/Utils"
-	"github.com/gorilla/websocket"
 )
 
 // This struct is created for ease of storing information about each created room
@@ -33,14 +32,21 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 	log.Println("Websocket connection established!")
+	var newUsername string
+	var userKey string
+	fmt.Println("Enter new Username:")
+	fmt.Scan(&newUsername)
+	fmt.Println("Enter optional key:")
+	fmt.Scan(&userKey)
+	newUser := user.CreateUser(newUsername, userKey)
 	msgChan := make(chan string)
-	go SendMessage(ws, msgChan)
+	go SendMessage(ws, newUser.Name, msgChan)
 	go ReceiveMessage(ws, msgChan)
 	select {}
 
 }
 
-func SendMessage(conn *websocket.Conn, msgChan chan string) {
+func SendMessage(conn *websocket.Conn, username string, msgChan chan string) {
 	for msg := range msgChan {
 		err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
 		if err != nil {
@@ -50,7 +56,15 @@ func SendMessage(conn *websocket.Conn, msgChan chan string) {
 	}
 }
 
-func ReceiveMessage(u user.User, ws *websocket.Conn, msgChan chan string) {
+func ReceiveMessage(ws *websocket.Conn, msgChan chan string) {
+	_, nameTxt, err := ws.ReadMessage()
+	if err != nil {
+		log.Println("Error getting username:", err)
+		return
+	}
+	username := string(nameTxt)
+	log.Printf("User '%s' is connected", username)
+
 	for {
 		_, content, err := ws.ReadMessage()
 		if err != nil {
@@ -58,8 +72,8 @@ func ReceiveMessage(u user.User, ws *websocket.Conn, msgChan chan string) {
 			close(msgChan)
 			return
 		}
-		log.Printf("%v: %s\n", u.Name, content)
-		msgChan <- string(content)
+		log.Println(fmt.Sprintf("|| [%v]: %s\n", username, content))
+		msgChan <- fmt.Sprintf("|| [%v]: %s\n", username, string(content))
 	}
 }
 
