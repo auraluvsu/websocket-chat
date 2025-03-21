@@ -3,7 +3,9 @@ package chatter
 import (
 	"auraluvsu.com/User"
 	"auraluvsu.com/Utils"
+	"database/sql"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/gorilla/websocket"
 	"log"
 	"net"
@@ -24,6 +26,20 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+
+func InitDB()  *sql.DB{
+    db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+		log.Fatal("Error conecting to MySQL:", err)
+	}
+
+    createTable :=
+        `CREATE TABLE IF NOT EXISTS tblUser (
+            userid  TEXT PRIMARY KEY
+
+	fmt.Println("Connected to Database successfully!")
+}
+
 func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -31,7 +47,7 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer ws.Close()
-	log.Println("Websocket connection established!")
+	fmt.Println("Websocket connection established!")
 	var newUsername string
 	var userKey string
 	fmt.Println("Enter new Username:")
@@ -39,6 +55,8 @@ func HandleConnection(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Enter optional key:")
 	fmt.Scan(&userKey)
 	newUser := user.CreateUser(newUsername, userKey)
+	_, err = db.Exec("INSERT INTO tblUser (username) VALUES (?)", string(newUser.Name))
+	_, err = db.Exec("INSERT INTO tblUser (password) VALUES (?)", string(newUser.Key))
 	msgChan := make(chan string)
 	go SendMessage(ws, newUser.Name, msgChan)
 	go ReceiveMessage(ws, msgChan)

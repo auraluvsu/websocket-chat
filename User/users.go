@@ -10,6 +10,7 @@ type User struct {
 	Name    string
 	Userid  []byte
 	isAdmin bool
+	Key     string
 }
 
 type ChatMsg struct {
@@ -25,6 +26,7 @@ func CreateUser(username, key string) *User {
 		Name:    username,
 		Userid:  UserID,
 		isAdmin: false,
+		Key:     key,
 	}
 	return newUser // Returns the created user
 }
