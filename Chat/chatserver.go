@@ -27,7 +27,7 @@ var upgrader = websocket.Upgrader{
 }
 
 
-func InitDB()  *sql.DB{
+func InitDB() *sql.DB {
     db, err := sql.Open("sqlite3", "./database.db")
 	if err != nil {
 		log.Fatal("Error conecting to MySQL:", err)
@@ -35,7 +35,11 @@ func InitDB()  *sql.DB{
 
     createTable :=
         `CREATE TABLE IF NOT EXISTS tblUser (
-            userid  TEXT PRIMARY KEY
+            userid  	TEXT UNIQUE NOT NULL
+			password	TEXT NOT NULL
+			username	TEXT UNIQUE KEY NOT NULL
+			created_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			);`
 
 	fmt.Println("Connected to Database successfully!")
 }
